@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hitung Pengeluaran Kepala Keluarga</title>
+<meta name="description" content="Simulasi menghitung pengeluaran keluarga per bulan dan per tahun: makanan, uang jajan, dan pengeluaran rutin, lengkap dengan sisa pendapatan.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧮</text></svg>">
+<style>
+:root{
+  --blue-950:#082c55; --blue-800:#0a4a8f; --blue-700:#0b5cad; --blue-500:#3b82c4; --blue-300:#9cc3e8; --blue-100:#dcebf8; --blue-50:#eef5fc;
+  --bg:#f3f6fa; --card:#fff; --ink:#14233a; --muted:#5a6a80; --line:#d8e1ec;
+  --ok:#14703f; --ok-bg:#e6f4ec; --bad:#b42318; --bad-bg:#fdecea; --amber:#d98a00;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+a{color:var(--blue-700)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.topbar{background:var(--blue-950);color:#cfe1f5;font-size:13px}
+.topbar .wrap{display:flex;gap:10px;align-items:center;padding-top:8px;padding-bottom:8px}
+.topbar b{color:#fff;font-weight:600}
+.hero{background:linear-gradient(135deg,var(--blue-700),var(--blue-950));color:#fff;padding:36px 0 64px}
+.hero h1{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.2;letter-spacing:-.01em}
+.hero p{margin:0;max-width:640px;color:#d6e6f7}
+.steps{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0;padding:0;list-style:none}
+.steps li{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 14px 6px 6px;font-size:14px;display:flex;align-items:center;gap:8px}
+.steps li span{background:#fff;color:var(--blue-800);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px}
+
+/* Layout */
+main{margin-top:-36px;padding-bottom:40px}
+.notice{background:var(--blue-50);border:1px solid var(--blue-300);color:var(--blue-950);border-radius:var(--radius);padding:12px 16px;margin-bottom:20px;font-size:14.5px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+.col{display:grid;gap:20px}
+aside{position:sticky;top:16px;display:grid;gap:20px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(10,40,80,.05);overflow:hidden}
+.card>header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(#fff,var(--blue-50))}
+.card>header .no{flex:none;width:30px;height:30px;border-radius:8px;background:var(--blue-700);color:#fff;display:grid;place-items:center;font-weight:700}
+.card>header h2{margin:0;font-size:1.05rem;line-height:1.3}
+.card>header p{margin:0;font-size:13.5px;color:var(--muted)}
+.body{padding:18px 20px;display:grid;gap:18px}
+
+/* Fields */
+.field label{display:block;font-weight:600;font-size:15px;margin-bottom:6px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.money,.count{display:flex;align-items:stretch;border:1.5px solid #b9c7d9;border-radius:8px;background:#fff;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.money:focus-within,.count:focus-within{border-color:var(--blue-700);box-shadow:0 0 0 3px rgba(11,92,173,.18)}
+.money{flex:1 1 200px;min-width:0}
+.count{flex:0 1 150px}
+.pre,.suf{display:grid;place-items:center;padding:0 12px;background:var(--blue-50);color:var(--muted);font-size:14px;white-space:nowrap}
+.pre{border-right:1px solid var(--line);font-weight:600}
+.suf{border-left:1px solid var(--line)}
+.money input,.count input{border:0;outline:0;background:transparent;font:inherit;font-size:17px;padding:10px 12px;width:100%;min-width:0;text-align:right;color:var(--ink)}
+.count input{text-align:center}
+.x{color:var(--muted);font-weight:700}
+.hint{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
+.subtotal{margin:4px 0 0;font-size:14px;color:var(--blue-800)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.list{display:grid;gap:18px}
+.list .field{padding-top:18px;border-top:1px dashed var(--line)}
+.list .field:first-child{padding-top:0;border-top:0}
+
+.derived{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.derived div{background:var(--blue-50);border:1px solid var(--blue-100);border-radius:10px;padding:10px 12px}
+.derived small{display:block;color:var(--muted);font-size:12.5px}
+.derived strong{font-size:15px;color:var(--blue-950);word-break:break-word}
+.fine{font-size:13px;color:var(--muted);margin:0}
+
+details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fafcfe}
+details summary{cursor:pointer;font-weight:600;font-size:14.5px;color:var(--blue-800)}
+details ul{margin:8px 0 0;padding-left:20px;font-size:14.5px}
+
+/* Summary */
+.sum{padding:20px;display:grid;gap:16px}
+.sum h2{margin:0;font-size:1.05rem}
+.big small{display:block;color:var(--muted);font-size:13.5px}
+.big strong{display:block;font-size:2rem;line-height:1.15;color:var(--blue-950);letter-spacing:-.01em;word-break:break-word}
+.big span{color:var(--muted);font-size:14px}
+.status{border-radius:10px;padding:12px 14px;font-size:14.5px;border:1px solid var(--line);background:var(--blue-50)}
+.status b{display:block;font-size:1.15rem}
+.status.ok{background:var(--ok-bg);border-color:#b7dcc6;color:#0d4a29}
+.status.bad{background:var(--bad-bg);border-color:#f3c0ba;color:#7a1710}
+.stack{display:flex;height:20px;border-radius:999px;overflow:hidden;background:#e7edf5}
+.stack i{display:block;height:100%;transition:flex-basis .25s}
+.c-food{background:var(--blue-800)} .c-other{background:var(--blue-500)} .c-left{background:#2f9e63}
+.legend{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px}
+.legend li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.legend .dot{width:12px;height:12px;border-radius:3px;flex:none}
+.legend em{font-style:normal;color:var(--muted);margin-left:auto;font-size:13px}
+.legend strong{font-weight:600}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pair div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pair small{display:block;color:var(--muted);font-size:12.5px}
+.pair strong{font-size:15px}
+
+/* Table + bars */
+.bars{display:grid;gap:12px;padding:18px 20px}
+.bar .t{display:flex;justify-content:space-between;gap:12px;font-size:14.5px;margin-bottom:4px}
+.bar .t span:last-child{color:var(--muted);white-space:nowrap}
+.bar .track{height:12px;background:#e7edf5;border-radius:999px;overflow:hidden}
+.bar .fill{height:100%;background:var(--blue-500);border-radius:999px;transition:width .25s}
+.bar.food .fill{background:var(--blue-800)}
+.empty{color:var(--muted);font-size:14.5px;margin:0;padding:18px 20px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td:nth-child(2),th:nth-child(2){width:48px;text-align:center}
+thead th{background:var(--blue-50);font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--blue-950)}
+tr.group td{background:#f7fafd;font-weight:600}
+tr.sub td:first-child{padding-left:30px}
+tr.total td{font-weight:700;background:var(--blue-50)}
+tr.grand td{font-weight:700;background:var(--blue-100)}
+tr.left td{font-weight:700}
+tr.left.ok td{color:var(--ok)} tr.left.bad td{color:var(--bad)}
+
+/* Buttons */
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1.5px solid var(--blue-700);background:#fff;color:var(--blue-700)}
+.btn:hover{background:var(--blue-50)}
+.btn.primary{background:var(--blue-700);color:#fff}
+.btn.primary:hover{background:var(--blue-800)}
+.btn:focus-visible{outline:3px solid rgba(11,92,173,.35);outline-offset:2px}
+
+/* Unduh */
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dlbtn{font:inherit;display:flex;align-items:center;gap:14px;text-align:left;padding:16px 18px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;color:var(--ink);transition:border-color .15s,box-shadow .15s,background .15s}
+.dlbtn:hover{border-color:var(--blue-500);background:var(--blue-50);box-shadow:0 2px 8px rgba(10,60,120,.1)}
+.dlbtn:focus-visible{outline:3px solid rgba(11,92,173,.35);outline-offset:2px}
+.dlbtn .ic{flex:none;width:46px;height:46px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.dlbtn.pdf .ic{background:#c0392b}
+.dlbtn.xls .ic{background:#1d7a46}
+.dlbtn strong{display:block;font-size:16px}
+.dlbtn small{display:block;color:var(--muted);font-size:13px;line-height:1.35}
+.dlbtn.busy{opacity:.65;cursor:progress}
+@media (max-width:640px){.dl{grid-template-columns:1fr}}
+
+footer{background:var(--blue-950);color:#b9cde4;font-size:14px;padding:22px 0}
+footer p{margin:0 0 4px}
+
+.mobilebar{display:none}
+.toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:30}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:960px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  aside{position:static}
+  .mobilebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(10,40,80,.12);padding:8px 16px;gap:12px;align-items:center;justify-content:space-between}
+  .mobilebar small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+  .mobilebar strong{font-size:15px}
+  .mobilebar .bad{color:var(--bad)} .mobilebar .ok{color:var(--ok)}
+  body{padding-bottom:64px}
+}
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .grid3,.derived{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3 .field:last-child{grid-column:1/-1}
+  .count{flex:1 1 120px}
+  .big strong{font-size:1.7rem}
+}
+@media print{
+  .topbar,.notice,.mobilebar,.toast,.toolbar,#unduh{display:none!important}
+  .hero{background:none!important;color:#000;padding:0 0 12px}
+  .hero p,.steps{display:none}
+  main{margin-top:0}
+  .layout{grid-template-columns:1fr}
+  aside{position:static}
+  .card{box-shadow:none;break-inside:avoid}
+  footer{background:none;color:#444}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap"><b>Simulasi</b> <span>Keuangan Keluarga</span></div></div>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Hitung Pengeluaran Kepala Keluarga</h1>
+    <p>Isi angka sesuai kondisi keluarga Anda. Total pengeluaran per minggu, per bulan, dan per tahun serta sisa pendapatan dihitung otomatis.</p>
+    <ol class="steps">
+      <li><span>1</span> Isi pendapatan</li>
+      <li><span>2</span> Isi pengeluaran</li>
+      <li><span>3</span> Lihat hasilnya</li>
+    </ol>
+  </div>
+</section>
+
+<main>
+<div class="wrap">
+
+  <div class="notice">
+    <span>Angka awal di bawah hanyalah <b>contoh</b>. Ganti dengan kondisi keluarga Anda.</span>
+    <div class="toolbar">
+      <button class="btn" type="button" id="btn-contoh">Isi contoh</button>
+      <button class="btn" type="button" id="btn-kosong">Kosongkan</button>
+    </div>
+  </div>
+
+  <noscript><p class="notice">Simulasi ini membutuhkan JavaScript. Aktifkan JavaScript di peramban Anda.</p></noscript>
+
+  <div class="layout">
+    <div class="col">
+
+      <!-- 1. Pendapatan -->
+      <section class="card" aria-labelledby="h-pendapatan">
+        <header><div class="no">1</div><div><h2 id="h-pendapatan">Pendapatan tetap</h2><p>Penghasilan rutin keluarga setiap bulan</p></div></header>
+        <div class="body">
+          <div class="field">
+            <label for="in-pendapatan">Pendapatan tetap per bulan</label>
+            <div class="money"><span class="pre">Rp</span><input id="in-pendapatan" data-key="pendapatan" data-max="11" inputmode="numeric" autocomplete="off" placeholder="0" aria-describedby="hint-pendapatan"><span class="suf">/ bulan</span></div>
+            <p class="hint" id="hint-pendapatan">Pendapatan per tahun: <strong data-out="pendTahun">Rp 0</strong></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Makan -->
+      <section class="card" aria-labelledby="h-makan">
+        <header><div class="no">2</div><div><h2 id="h-makan">Pengeluaran makanan keluarga</h2><p>Dihitung dari uang makan setiap orang</p></div></header>
+        <div class="body">
+          <div class="grid3">
+            <div class="field">
+              <label for="in-tarif">Uang makan per orang</label>
+              <div class="money"><span class="pre">Rp</span><input id="in-tarif" data-key="tarif" data-max="9" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+              <p class="hint">Sekali makan</p>
+            </div>
+            <div class="field">
+              <label for="in-anggota">Jumlah anggota</label>
+              <div class="count"><input id="in-anggota" data-key="anggota" data-max="2" inputmode="numeric" autocomplete="off" placeholder="0"><span class="suf">orang</span></div>
+              <p class="hint">Yang makan di rumah</p>
+            </div>
+            <div class="field">
+              <label for="in-kali">Frekuensi makan</label>
+              <div class="count"><input id="in-kali" data-key="kali" data-max="2" inputmode="numeric" autocomplete="off" placeholder="0"><span class="suf">kali/hari</span></div>
+              <p class="hint">Sehari</p>
+            </div>
+          </div>
+          <div class="derived" aria-live="polite">
+            <div><small>Sekeluarga per hari</small><strong data-out="makanHari">Rp 0</strong></div>
+            <div><small>Per minggu</small><strong data-out="makanMinggu">Rp 0</strong></div>
+            <div><small>Per bulan</small><strong data-out="makanBulan">Rp 0</strong></div>
+            <div><small>Per tahun</small><strong data-out="makanTahun">Rp 0</strong></div>
+          </div>
+          <p class="fine">Perhitungan memakai 7 hari seminggu, 52 minggu setahun, dan 12 bulan setahun.</p>
+        </div>
+      </section>
+
+      <!-- 3. Jajan -->
+      <section class="card" aria-labelledby="h-jajan">
+        <header><div class="no">3</div><div><h2 id="h-jajan">Uang jajan</h2><p>Uang saku anak setiap bulan</p></div></header>
+        <div class="body"><div class="list" id="list-jajan"></div></div>
+      </section>
+
+      <!-- 4. Rutin -->
+      <section class="card" aria-labelledby="h-rutin">
+        <header><div class="no">4</div><div><h2 id="h-rutin">Pengeluaran bukan makanan rutin keluarga</h2><p>Isi jumlah per bulan; kosongkan bila tidak ada</p></div></header>
+        <div class="body"><div class="list" id="list-rutin"></div></div>
+      </section>
+
+    </div>
+
+    <aside id="hasil" aria-label="Ringkasan hasil">
+      <section class="card sum" aria-live="polite">
+        <h2>Ringkasan per bulan</h2>
+        <div class="big">
+          <small>Total pengeluaran</small>
+          <strong data-out="totalBulan">Rp 0</strong>
+          <span>per tahun: <b data-out="totalTahun">Rp 0</b></span>
+        </div>
+        <div class="status" id="status"></div>
+        <div>
+          <div class="stack" id="stack" role="img" aria-label="Pembagian pendapatan"></div>
+        </div>
+        <ul class="legend" id="legend"></ul>
+        <div class="pair">
+          <div><small>Pendapatan / bulan</small><strong data-out="pendBulan">Rp 0</strong></div>
+          <div><small>Pendapatan / tahun</small><strong data-out="pendTahun">Rp 0</strong></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn primary" type="button" id="btn-salin">Salin ringkasan</button>
+          <button class="btn" type="button" id="btn-cetak">Cetak</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="col" style="margin-top:24px">
+    <section class="card" aria-labelledby="h-komposisi">
+      <header><div class="no">★</div><div><h2 id="h-komposisi">Ke mana uang keluar?</h2><p>Porsi tiap pengeluaran terhadap total pengeluaran bulanan</p></div></header>
+      <div id="bars"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-rincian">
+      <header><div class="no">≡</div><div><h2 id="h-rincian">Rincian pengeluaran</h2><p>Per bulan dan per tahun</p></div></header>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Jenis pengeluaran</th><th>No.</th><th>Per bulan</th><th>Per tahun</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <details>
+      <summary>Bagaimana angka dihitung?</summary>
+      <ul>
+        <li>Uang makan sekeluarga per hari = uang makan per orang × jumlah anggota × frekuensi makan sehari.</li>
+        <li>Per minggu = per hari × 7. Per tahun = per minggu × 52. Per bulan = per tahun ÷ 12.</li>
+        <li>Pengeluaran lainnya diisi per bulan; per tahun = per bulan × 12.</li>
+        <li>Total pengeluaran = makanan + uang jajan + seluruh pengeluaran rutin.</li>
+        <li>Sisa pendapatan = pendapatan tetap − total pengeluaran. Bila negatif, pengeluaran melebihi pendapatan.</li>
+      </ul>
+    </details>
+
+    <section class="card" id="unduh" aria-labelledby="h-unduh">
+      <header><div class="no">↓</div><div><h2 id="h-unduh">Unduh hasil simulasi</h2><p>Simpan hasil hitungan untuk arsip atau dibagikan</p></div></header>
+      <div class="body">
+        <div class="dl">
+          <button class="dlbtn pdf" type="button" id="btn-pdf">
+            <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6m0 0-2.5-2.5M12 17l2.5-2.5"/></svg></span>
+            <span><strong>Unduh PDF</strong><small>Ringkasan dan rincian siap cetak (A4)</small></span>
+          </button>
+          <button class="dlbtn xls" type="button" id="btn-xlsx">
+            <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg></span>
+            <span><strong>Unduh Excel (.xlsx)</strong><small>Rumus aktif, angka bisa diubah di Excel</small></span>
+          </button>
+        </div>
+        <p class="fine">File dibuat langsung di perangkat Anda dari angka yang sedang terisi. Dibutuhkan koneksi internet saat pertama kali mengunduh.</p>
+      </div>
+    </section>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Hasil simulasi bersifat perkiraan dan bergantung pada angka yang Anda isikan.</p>
+    <p>Semua perhitungan berjalan di peramban Anda; tidak ada data yang dikirim ke server.</p>
+  </div>
+</footer>
+
+<div class="mobilebar" id="mobilebar">
+  <div><small>Total pengeluaran / bulan</small><strong data-out="totalBulan">Rp 0</strong></div>
+  <div style="text-align:right"><small id="mb-label">Sisa / bulan</small><strong id="mb-val">Rp 0</strong></div>
+  <a class="btn primary" href="#hasil" style="text-decoration:none">Hasil</a>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ====== Pengaturan (ubah di sini) ====== */
+  var HARI_MINGGU = 7, MINGGU_TAHUN = 52, BULAN_TAHUN = 12;
+
+  // Nilai awal = contoh dari file Excel
+  var CONTOH = { pendapatan:2500000, tarif:15000, anggota:7, kali:3, jajan:0, anak:1,
+    listrik:0, air:0, gas:0, internet:0, ponsel:1, bbm:0, pendidikan:0, kesehatan:0, cicilan:0, pakaian:0, lainnya:0 };
+  var KOSONG = { pendapatan:0, tarif:0, anggota:1, kali:3, jajan:0, anak:1,
+    listrik:0, air:0, gas:0, internet:0, ponsel:1, bbm:0, pendidikan:0, kesehatan:0, cicilan:0, pakaian:0, lainnya:0 };
+
+  var JAJAN = [
+    { id:'jajan', label:'Uang jajan', countKey:'anak', countUnit:'anak', suffix:'/ anak / bulan',
+      hint:'Berapa uang jajan anak per bulan (nominal × jumlah anak)' }
+  ];
+  var RUTIN = [
+    { id:'listrik', label:'Listrik', hint:'Berapa tagihan listrik per bulan' },
+    { id:'air', label:'Air', hint:'Berapa tagihan PDAM per bulan' },
+    { id:'gas', label:'Gas', hint:'Berapa pengeluaran beli gas per bulan' },
+    { id:'internet', label:'Internet/telepon', countKey:'ponsel', countUnit:'ponsel', suffix:'/ ponsel / bulan',
+      hint:'Berapa pengeluaran beli kuota internet per bulan (jumlah dikalikan dengan berapa ponsel yang dimiliki)' },
+    { id:'bbm', label:'Transportasi/BBM', hint:'Berapa pengeluaran beli BBM per bulan' },
+    { id:'pendidikan', label:'Pendidikan/sekolah (Komite/Paguyuban, Alat Tulis)', hint:'Berapa pengeluaran untuk biaya pendidikan per bulan' },
+    { id:'kesehatan', label:'Kesehatan (contoh: Iuran BPJS, obat)', hint:'Berapa pengeluaran untuk biaya kesehatan, seperti iuran BPJS, beli obat, dll' },
+    { id:'cicilan', label:'Cicilan', hint:'Berapa pengeluaran untuk bayar cicilan (motor/mobil/rumah, utang) per bulan' },
+    { id:'pakaian', label:'Kebutuhan pakaian', hint:'Berapa pengeluaran untuk 1 bulan berjalan saja' },
+    { id:'lainnya', label:'Pengeluaran rutin lainnya', hint:'Berapa pengeluaran rutin lainnya (lihat keterangan rincian)',
+      extra:'<details><summary>Keterangan rincian</summary><ul>' +
+        '<li>Kebersihan rumah: Sapu, alat pel, dan cairan pembersih lantai</li>' +
+        '<li>Kebersihan diri: Sabun mandi, sampo, dan pasta gigi</li>' +
+        '<li>Pencuci pakaian &amp; piring: Deterjen dan sabun cuci piring</li></ul></details>' }
+  ];
+  var ITEMS = JAJAN.concat(RUTIN);
+
+  /* ====== Util ====== */
+  var state = {};
+  function copy(o){ var r={}; for (var k in o) r[k]=o[k]; return r; }
+  function fmt(n){ return String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function rp(n){ return (Math.round(n) < 0 ? '−' : '') + 'Rp ' + fmt(n); }
+  function pct(part, whole){ return whole > 0 ? Math.round(part / whole * 100) + '%' : '–'; }
+  function $(s, r){ return (r||document).querySelector(s); }
+  function $$(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+
+  /* ====== Bangun form ====== */
+  function fieldHTML(it){
+    var id = it.id;
+    var h = '<div class="field"><label for="in-'+id+'">'+it.label+'</label><div class="row">' +
+      '<div class="money"><span class="pre">Rp</span><input id="in-'+id+'" data-key="'+id+'" data-max="11" inputmode="numeric" autocomplete="off" placeholder="0" aria-describedby="hint-'+id+'">' +
+      '<span class="suf">'+(it.suffix||'/ bulan')+'</span></div>';
+    if (it.countKey){
+      h += '<span class="x" aria-hidden="true">×</span><div class="count"><input id="in-'+it.countKey+'" data-key="'+it.countKey+'" data-max="2" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Jumlah '+it.countUnit+'"><span class="suf">'+it.countUnit+'</span></div>';
+    }
+    h += '</div><p class="hint" id="hint-'+id+'">'+it.hint+'</p>';
+    if (it.countKey) h += '<p class="subtotal">= <strong data-sub="'+id+'">Rp 0</strong> per bulan</p>';
+    if (it.extra) h += it.extra;
+    return h + '</div>';
+  }
+  $('#list-jajan').innerHTML = JAJAN.map(fieldHTML).join('');
+  $('#list-rutin').innerHTML = RUTIN.map(fieldHTML).join('');
+
+  function bindInput(el){
+    var key = el.getAttribute('data-key'), max = parseInt(el.getAttribute('data-max'), 10) || 11;
+    el.addEventListener('input', function(){
+      var caret = el.selectionStart == null ? el.value.length : el.selectionStart;
+      var before = el.value.slice(0, caret).replace(/\D/g, '').length;
+      var digits = el.value.replace(/\D/g, '').slice(0, max).replace(/^0+(?=\d)/, '');
+      var num = digits === '' ? 0 : Number(digits);
+      var out = digits === '' ? '' : fmt(num);
+      el.value = out;
+      var pos = 0, cnt = 0;
+      while (pos < out.length && cnt < before){ if (/\d/.test(out.charAt(pos))) cnt++; pos++; }
+      try { el.setSelectionRange(pos, pos); } catch(e){}
+      state[key] = num;
+      update();
+    });
+    el.addEventListener('focus', function(){ setTimeout(function(){ try{ el.select(); }catch(e){} }, 0); });
+  }
+  $$('input[data-key]').forEach(bindInput);
+
+  function setInputs(){
+    $$('input[data-key]').forEach(function(el){
+      var v = state[el.getAttribute('data-key')] || 0;
+      el.value = v ? fmt(v) : '';
+    });
+  }
+
+  /* ====== Hitung ====== */
+  function calc(){
+    var s = state, r = {};
+    r.makanHari = s.tarif * s.anggota * s.kali;
+    r.makanMinggu = r.makanHari * HARI_MINGGU;
+    r.makanTahun = r.makanMinggu * MINGGU_TAHUN;
+    r.makanBulan = r.makanTahun / BULAN_TAHUN;
+    r.rows = ITEMS.map(function(it){
+      var bulan = s[it.id] * (it.countKey ? s[it.countKey] : 1);
+      return { id:it.id, label:it.label, bulan:bulan, tahun:bulan * BULAN_TAHUN, grup: it.id === 'jajan' ? 'jajan' : 'rutin' };
+    });
+    r.bukanMakanBulan = r.rows.reduce(function(a, x){ return a + x.bulan; }, 0);
+    r.bukanMakanTahun = r.bukanMakanBulan * BULAN_TAHUN;
+    r.totalBulan = r.makanBulan + r.bukanMakanBulan;
+    r.totalTahun = r.makanTahun + r.bukanMakanTahun;
+    r.pendBulan = s.pendapatan;
+    r.pendTahun = s.pendapatan * BULAN_TAHUN;
+    r.sisaBulan = r.pendBulan - r.totalBulan;
+    r.sisaTahun = r.pendTahun - r.totalTahun;
+    return r;
+  }
+
+  var last = null;
+  function update(){
+    var r = last = calc();
+
+    $$('[data-out]').forEach(function(el){ el.textContent = rp(r[el.getAttribute('data-out')]); });
+    $$('[data-sub]').forEach(function(el){
+      var row = r.rows.filter(function(x){ return x.id === el.getAttribute('data-sub'); })[0];
+      el.textContent = rp(row ? row.bulan : 0);
+    });
+
+    // Status
+    var st = $('#status');
+    var kosong = r.totalBulan === 0 && r.pendBulan === 0;
+    st.className = 'status';
+    if (kosong){
+      st.innerHTML = 'Isi pendapatan dan pengeluaran untuk melihat hasilnya.';
+    } else if (r.sisaBulan >= 0){
+      st.className = 'status ok';
+      st.innerHTML = '<b>Sisa pendapatan ' + rp(r.sisaBulan) + ' / bulan</b>Setahun tersisa ' + rp(r.sisaTahun) + '.';
+    } else {
+      st.className = 'status bad';
+      st.innerHTML = '<b>Pengeluaran melebihi pendapatan ' + rp(-r.sisaBulan) + ' / bulan</b>Dalam setahun kekurangannya ' + rp(-r.sisaTahun) + '.';
+    }
+
+    // Bar bertumpuk
+    var base = Math.max(r.pendBulan, r.totalBulan);
+    var w = function(v){ return base > 0 ? Math.max(0, v) / base * 100 : 0; };
+    $('#stack').innerHTML =
+      '<i class="c-food" style="flex-basis:'+w(r.makanBulan)+'%"></i>' +
+      '<i class="c-other" style="flex-basis:'+w(r.bukanMakanBulan)+'%"></i>' +
+      '<i class="c-left" style="flex-basis:'+w(r.sisaBulan)+'%"></i>';
+    $('#legend').innerHTML =
+      '<li><span class="dot c-food"></span><span>Makanan</span><em>' + rp(r.makanBulan) + ' · ' + pct(r.makanBulan, r.pendBulan) + ' dari pendapatan</em></li>' +
+      '<li><span class="dot c-other"></span><span>Bukan makanan</span><em>' + rp(r.bukanMakanBulan) + ' · ' + pct(r.bukanMakanBulan, r.pendBulan) + ' dari pendapatan</em></li>' +
+      '<li><span class="dot c-left"></span><span>Sisa pendapatan</span><em>' + rp(Math.max(0, r.sisaBulan)) + ' · ' + pct(Math.max(0, r.sisaBulan), r.pendBulan) + '</em></li>';
+
+    // Komposisi
+    var comp = [{ label:'Makanan keluarga', v:r.makanBulan, food:true }].concat(
+      r.rows.map(function(x){ return { label:x.label, v:x.bulan }; })
+    ).filter(function(x){ return x.v > 0; }).sort(function(a, b){ return b.v - a.v; });
+    $('#bars').innerHTML = comp.length
+      ? '<div class="bars">' + comp.map(function(x){
+          var p = x.v / r.totalBulan * 100;
+          return '<div class="bar'+(x.food?' food':'')+'"><div class="t"><span>'+x.label+'</span><span>'+rp(x.v)+' · '+Math.round(p)+'%</span></div>' +
+                 '<div class="track"><div class="fill" style="width:'+p+'%"></div></div></div>';
+        }).join('') + '</div>'
+      : '<p class="empty">Belum ada pengeluaran yang diisi.</p>';
+
+    // Tabel
+    var t = '';
+    t += '<tr><td>Pengeluaran makanan keluarga</td><td>1</td><td>'+rp(r.makanBulan)+'</td><td>'+rp(r.makanTahun)+'</td></tr>';
+    var j = r.rows[0];
+    t += '<tr><td>Uang jajan</td><td>2</td><td>'+rp(j.bulan)+'</td><td>'+rp(j.tahun)+'</td></tr>';
+    t += '<tr class="group"><td colspan="4">3. Pengeluaran bukan makanan rutin keluarga</td></tr>';
+    r.rows.slice(1).forEach(function(x){
+      t += '<tr class="sub"><td>• '+x.label+'</td><td></td><td>'+rp(x.bulan)+'</td><td>'+rp(x.tahun)+'</td></tr>';
+    });
+    t += '<tr class="total"><td>Total bukan makanan (poin 2 dan 3)</td><td></td><td>'+rp(r.bukanMakanBulan)+'</td><td>'+rp(r.bukanMakanTahun)+'</td></tr>';
+    t += '<tr class="grand"><td>Total seluruh pengeluaran</td><td></td><td>'+rp(r.totalBulan)+'</td><td>'+rp(r.totalTahun)+'</td></tr>';
+    t += '<tr><td>Pendapatan tetap</td><td></td><td>'+rp(r.pendBulan)+'</td><td>'+rp(r.pendTahun)+'</td></tr>';
+    t += '<tr class="left '+(r.sisaBulan >= 0 ? 'ok' : 'bad')+'"><td>' + (r.sisaBulan >= 0 ? 'Sisa pendapatan' : 'Kekurangan (defisit)') + '</td><td></td><td>'+rp(r.sisaBulan)+'</td><td>'+rp(r.sisaTahun)+'</td></tr>';
+    $('#tbody').innerHTML = t;
+
+    // Bar bawah (mobile)
+    var mb = $('#mb-val');
+    $('#mb-label').textContent = r.sisaBulan >= 0 ? 'Sisa / bulan' : 'Defisit / bulan';
+    mb.textContent = rp(Math.abs(r.sisaBulan));
+    mb.className = r.sisaBulan >= 0 ? 'ok' : 'bad';
+  }
+
+  /* ====== Tombol ====== */
+  function load(src){ state = copy(src); setInputs(); update(); }
+  $('#btn-contoh').addEventListener('click', function(){ load(CONTOH); });
+  $('#btn-kosong').addEventListener('click', function(){ load(KOSONG); });
+  $('#btn-cetak').addEventListener('click', function(){ window.print(); });
+
+  var toastTimer;
+  function toast(msg){
+    var el = $('#toast'); el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+  }
+  $('#btn-salin').addEventListener('click', function(){
+    var r = last || calc();
+    var lines = [
+      'Hitung Pengeluaran Kepala Keluarga',
+      '',
+      'Pendapatan tetap per bulan: ' + rp(r.pendBulan),
+      'Pengeluaran makanan per bulan: ' + rp(r.makanBulan)
+    ];
+    r.rows.forEach(function(x){ if (x.bulan > 0) lines.push(x.label + ' per bulan: ' + rp(x.bulan)); });
+    lines.push('Total pengeluaran per bulan: ' + rp(r.totalBulan));
+    lines.push('Total pengeluaran per tahun: ' + rp(r.totalTahun));
+    lines.push((r.sisaBulan >= 0 ? 'Sisa pendapatan per bulan: ' : 'Kekurangan per bulan: ') + rp(Math.abs(r.sisaBulan)));
+    var text = lines.join('\n');
+    function fallback(){
+      var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta); toast(ok ? 'Ringkasan disalin' : 'Gagal menyalin');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast('Ringkasan disalin'); }, fallback);
+    } else { fallback(); }
+  });
+
+  /* ====== Unduh PDF & Excel ====== */
+  // Pustaka dimuat saat tombol pertama kali ditekan (versi dikunci). Jika CDN pertama gagal, dicoba CDN kedua.
+  var CDN = {
+    exceljs:   ['https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'],
+    jspdf:     ['https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'],
+    autotable: ['https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js']
+  };
+  var pending = {};
+  function loadLib(name, ready){
+    if (ready()) return Promise.resolve();
+    if (pending[name]) return pending[name];
+    pending[name] = new Promise(function(resolve, reject){
+      var i = 0;
+      (function next(){
+        if (i >= CDN[name].length){ pending[name] = null; reject(new Error('Gagal memuat ' + name)); return; }
+        var s = document.createElement('script');
+        s.src = CDN[name][i++]; s.async = true;
+        s.onload = function(){ if (ready()) resolve(); else { s.remove(); next(); } };
+        s.onerror = function(){ s.remove(); next(); };
+        document.head.appendChild(s);
+      })();
+    });
+    return pending[name];
+  }
+  function ensureExcel(){ return loadLib('exceljs', function(){ return !!window.ExcelJS; }); }
+  function ensurePdf(){
+    return loadLib('jspdf', function(){ return !!(window.jspdf && window.jspdf.jsPDF); }).then(function(){
+      return loadLib('autotable', function(){ return typeof window.jspdf.jsPDF.API.autoTable === 'function'; });
+    });
+  }
+
+  function stamp(){
+    var d = new Date(); function p(n){ return (n < 10 ? '0' : '') + n; }
+    return { iso: d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()),
+             id: d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) };
+  }
+  function rpPdf(n){ return (Math.round(n) < 0 ? '-' : '') + 'Rp ' + fmt(n); }   // PDF: tanda minus ASCII
+  function detail(it, s){
+    if (!it.countKey || !s[it.id]) return it.label;
+    return it.label + ' (Rp ' + fmt(s[it.id]) + ' x ' + s[it.countKey] + ' ' + it.countUnit + ')';
+  }
+  function saveBlob(blob, name){
+    var a = document.createElement('a'), url = URL.createObjectURL(blob);
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* ---- PDF ---- */
+  function buildPdf(r, s, st){
+    var doc = new window.jspdf.jsPDF({ unit:'pt', format:'a4' });
+    var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40;
+    var BLUE = [11,92,173], DARK = [8,44,85], INK = [20,35,58], MUTED = [90,106,128], OK = [20,112,63], BAD = [180,35,24];
+
+    doc.setFillColor(DARK[0], DARK[1], DARK[2]); doc.rect(0, 0, W, 76, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(19);
+    doc.text('Hitung Pengeluaran Kepala Keluarga', M, 37);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text('Hasil simulasi pada ' + st.id, M, 57);
+
+    var y = 102;
+    function heading(t){
+      if (y > H - 140){ doc.addPage(); y = 50; }
+      doc.setTextColor(DARK[0], DARK[1], DARK[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+      doc.text(t, M, y); y += 8;
+    }
+    function table(o){
+      var base = { startY:y, margin:{ left:M, right:M, bottom:50 }, theme:'grid',
+        styles:{ font:'helvetica', fontSize:9.5, cellPadding:5, textColor:INK, lineColor:[216,225,236], lineWidth:0.5 },
+        headStyles:{ fillColor:BLUE, textColor:[255,255,255], fontStyle:'bold' } };
+      for (var k in o) base[k] = o[k];
+      base.didParseCell = function(d){
+        var cs = o.columnStyles && o.columnStyles[d.column.index];
+        if (d.section === 'head' && cs && cs.halign) d.cell.styles.halign = cs.halign;
+      };
+      doc.autoTable(base);
+      y = doc.lastAutoTable.finalY + 24;
+    }
+    function bold(t, extra){ var st2 = { fontStyle:'bold' }; if (extra) for (var k in extra) st2[k] = extra[k]; return { content:t, styles:st2 }; }
+    var right = { 1:{ halign:'right' }, 2:{ halign:'right' } };
+
+    var ok = r.sisaBulan >= 0, sc = ok ? OK : BAD;
+    heading('Ringkasan');
+    table({
+      head: [['Keterangan', 'Per bulan', 'Per tahun']],
+      body: [
+        ['Pendapatan tetap', rpPdf(r.pendBulan), rpPdf(r.pendTahun)],
+        ['Total pengeluaran', rpPdf(r.totalBulan), rpPdf(r.totalTahun)],
+        [bold(ok ? 'Sisa pendapatan' : 'Kekurangan (defisit)', { textColor:sc }),
+         bold(rpPdf(r.sisaBulan), { textColor:sc }), bold(rpPdf(r.sisaTahun), { textColor:sc })]
+      ],
+      columnStyles: right
+    });
+
+    heading('Asumsi uang makan');
+    table({
+      head: [['Komponen', 'Nilai']],
+      body: [
+        ['Uang makan per orang (sekali makan)', rpPdf(s.tarif)],
+        ['Jumlah anggota keluarga', s.anggota + ' orang'],
+        ['Frekuensi makan per hari', s.kali + ' kali'],
+        ['Uang makan sekeluarga per hari', rpPdf(r.makanHari)],
+        ['Uang makan sekeluarga per minggu', rpPdf(r.makanMinggu)]
+      ],
+      columnStyles: { 1:{ halign:'right' } }
+    });
+
+    heading('Rincian pengeluaran');
+    var grp = { fillColor:[247,250,253], fontStyle:'bold' };
+    var tot = { fillColor:[238,245,252], fontStyle:'bold' };
+    var grand = { fillColor:[220,235,248], fontStyle:'bold' };
+    var body = [
+      ['1. Pengeluaran makanan keluarga', rpPdf(r.makanBulan), rpPdf(r.makanTahun)],
+      ['2. ' + detail(ITEMS[0], s), rpPdf(r.rows[0].bulan), rpPdf(r.rows[0].tahun)],
+      [{ content:'3. Pengeluaran bukan makanan rutin keluarga', colSpan:3, styles:grp }]
+    ];
+    r.rows.slice(1).forEach(function(x, i){
+      body.push(['   - ' + detail(ITEMS[i + 1], s), rpPdf(x.bulan), rpPdf(x.tahun)]);
+    });
+    body.push([{ content:'Total bukan makanan (poin 2 dan 3)', styles:tot }, { content:rpPdf(r.bukanMakanBulan), styles:tot }, { content:rpPdf(r.bukanMakanTahun), styles:tot }]);
+    body.push([{ content:'Total seluruh pengeluaran', styles:grand }, { content:rpPdf(r.totalBulan), styles:grand }, { content:rpPdf(r.totalTahun), styles:grand }]);
+    body.push(['Pendapatan tetap', rpPdf(r.pendBulan), rpPdf(r.pendTahun)]);
+    body.push([bold(ok ? 'Sisa pendapatan' : 'Kekurangan (defisit)', { textColor:sc }), bold(rpPdf(r.sisaBulan), { textColor:sc }), bold(rpPdf(r.sisaTahun), { textColor:sc })]);
+    table({ head: [['Jenis pengeluaran', 'Per bulan', 'Per tahun']], body: body, columnStyles: right });
+
+    var n = doc.internal.getNumberOfPages();
+    for (var p = 1; p <= n; p++){
+      doc.setPage(p); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text('Hasil simulasi bersifat perkiraan berdasarkan angka yang diisi pengguna.', M, H - 24);
+      doc.text('Halaman ' + p + ' dari ' + n, W - M, H - 24, { align:'right' });
+    }
+    return doc;
+  }
+
+  /* ---- Excel (rumus aktif) ---- */
+  function buildXlsx(r, s, st){
+    var wb = new window.ExcelJS.Workbook();
+    wb.creator = 'Simulasi Hitung Pengeluaran Kepala Keluarga'; wb.created = new Date();
+    var ws = wb.addWorksheet('Hitung Pengeluaran', {
+      views: [{ showGridLines:false }],
+      pageSetup: { paperSize:9, orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0 }
+    });
+    [6, 48, 20, 12, 20, 22, 58].forEach(function(w, i){ ws.getColumn(i + 1).width = w; });
+
+    var NUM = '#,##0;-#,##0', FONT = 'Arial', INPUT = 'FFFFFFCC';
+    var thin = { style:'thin', color:{ argb:'FFD8E1EC' } };
+    var BORDER = { top:thin, left:thin, bottom:thin, right:thin };
+    function put(ref, value, o){
+      o = o || {};
+      var c = ws.getCell(ref); c.value = value;
+      c.font = { name:FONT, size:o.size || 10, bold:!!o.bold, italic:!!o.italic, color:{ argb:o.color || 'FF14233A' } };
+      if (o.fill) c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:o.fill } };
+      if (o.num) c.numFmt = o.num;
+      if (o.border !== false) c.border = BORDER;
+      c.alignment = { vertical:'middle', horizontal:o.h, wrapText:!!o.wrap, indent:o.indent || 0 };
+      return c;
+    }
+    function f(formula, result){ return { formula:formula, result:result }; }
+    function band(row, text, fill){
+      ws.mergeCells('A' + row + ':G' + row);
+      put('A' + row, text, { bold:true, color:'FFFFFFFF', fill:fill, border:false, size:row === 1 ? 14 : 10 });
+    }
+
+    band(1, 'Hitung Pengeluaran Kepala Keluarga', 'FF082C55'); ws.getRow(1).height = 28;
+    put('A2', 'Tanggal simulasi: ' + st.id, { border:false, italic:true, color:'FF5A6A80' });
+    put('A3', 'Sel berwarna kuning dapat diubah; sel lainnya dihitung otomatis dengan rumus.', { border:false, italic:true, color:'FF5A6A80' });
+
+    // Asumsi (C6:C16)
+    band(5, 'ASUMSI', 'FF0B5CAD');
+    function asm(row, label, value, note, isInput, num){
+      put('B' + row, label);
+      put('C' + row, value, { fill: isInput ? INPUT : undefined, num: num || '#,##0', h:'right' });
+      ws.mergeCells('D' + row + ':G' + row);
+      put('D' + row, note, { color:'FF5A6A80', indent:1 });
+    }
+    asm(6,  'Pendapatan tetap per bulan', s.pendapatan, 'Pendapatan tetap keluarga setiap bulan (Rp)', true);
+    asm(7,  'Uang makan per orang (sekali makan)', s.tarif, 'Rp per orang untuk sekali makan', true);
+    asm(8,  'Jumlah anggota keluarga', s.anggota, 'Orang yang makan di rumah', true);
+    asm(9,  'Frekuensi makan per hari', s.kali, 'Kali makan dalam sehari', true);
+    asm(10, 'Hari dalam seminggu', HARI_MINGGU, 'Konstanta', false);
+    asm(11, 'Minggu dalam setahun', MINGGU_TAHUN, 'Jumlah minggu dalam setahun', false);
+    asm(12, 'Bulan dalam setahun', BULAN_TAHUN, 'Jumlah bulan dalam setahun', false);
+    asm(13, 'Jumlah anak', s.anak, 'Pengali uang jajan', true);
+    asm(14, 'Jumlah ponsel', s.ponsel, 'Pengali kuota internet', true);
+    asm(15, 'Uang makan sekeluarga per hari', f('C7*C8*C9', r.makanHari), 'Uang makan per orang × anggota × frekuensi makan', false);
+    asm(16, 'Uang makan sekeluarga per minggu', f('C15*C10', r.makanMinggu), 'Per hari × hari dalam seminggu', false);
+
+    // Tabel rincian
+    var head = ['No.', 'Jenis pengeluaran', 'Nominal per satuan', 'Pengali', 'Per bulan', 'Per tahun', 'Keterangan'];
+    head.forEach(function(t, i){
+      put(String.fromCharCode(65 + i) + '18', t, { bold:true, color:'FFFFFFFF', fill:'FF0B5CAD', h: i >= 2 && i <= 5 ? 'right' : 'left' });
+    });
+
+    put('A19', 1, { h:'center' });
+    put('B19', 'Pengeluaran makanan keluarga');
+    put('C19', null); put('D19', null);
+    put('E19', f('F19/$C$12', r.makanBulan), { num:NUM, h:'right' });
+    put('F19', f('C16*$C$11', r.makanTahun), { num:NUM, h:'right' });
+    put('G19', 'Total pengeluaran untuk makanan keluarga selama setahun', { color:'FF5A6A80', wrap:true, indent:1 });
+
+    var HINT = { jajan:'Berapa uang jajan anak per bulan (nominal × jumlah anak)' };
+    RUTIN.forEach(function(it){ HINT[it.id] = it.hint; });
+    function rowOf(i){ return i === 0 ? 20 : 21 + i; }
+
+    ITEMS.forEach(function(it, i){
+      var row = rowOf(i), x = r.rows[i];
+      if (i === 1){
+        ws.mergeCells('A21:G21');
+        put('A21', '3.  Pengeluaran bukan makanan rutin keluarga', { bold:true, fill:'FFF7FAFD' });
+      }
+      put('A' + row, i === 0 ? 2 : null, { h:'center' });
+      put('B' + row, i === 0 ? it.label : '•  ' + it.label, { wrap:true, indent: i === 0 ? 0 : 1 });
+      put('C' + row, s[it.id], { fill:INPUT, num:'#,##0', h:'right' });
+      if (it.countKey) put('D' + row, f(it.countKey === 'anak' ? 'C13' : 'C14', s[it.countKey]), { num:'#,##0', h:'right' });
+      else put('D' + row, null);
+      put('E' + row, f(it.countKey ? 'C' + row + '*D' + row : 'C' + row, x.bulan), { num:NUM, h:'right' });
+      put('F' + row, f('E' + row + '*$C$12', x.tahun), { num:NUM, h:'right' });
+      put('G' + row, HINT[it.id], { color:'FF5A6A80', wrap:true, indent:1 });
+    });
+
+    function sumRow(row, label, fE, rE, fF, rF, fill){
+      ws.mergeCells('A' + row + ':D' + row);
+      put('A' + row, label, { bold:true, fill:fill });
+      ['B','C','D'].forEach(function(c){ ws.getCell(c + row).border = BORDER; });
+      put('E' + row, f(fE, rE), { bold:true, fill:fill, num:NUM, h:'right' });
+      put('F' + row, f(fF, rF), { bold:true, fill:fill, num:NUM, h:'right' });
+      put('G' + row, null, { fill:fill });
+    }
+    sumRow(32, 'Total pengeluaran bukan makanan (poin 2 dan 3)', 'E20+SUM(E22:E31)', r.bukanMakanBulan, 'F20+SUM(F22:F31)', r.bukanMakanTahun, 'FFEEF5FC');
+    sumRow(33, 'Total seluruh pengeluaran', 'E19+E32', r.totalBulan, 'F19+F32', r.totalTahun, 'FFDCEBF8');
+    sumRow(34, 'Pendapatan tetap', 'C6', r.pendBulan, 'E34*$C$12', r.pendTahun);
+    sumRow(35, 'Sisa pendapatan', 'E34-E33', r.sisaBulan, 'F34-F33', r.sisaTahun);
+    ws.getCell('A35').value = f('IF(E35>=0,"Sisa pendapatan","Kekurangan (defisit)")', r.sisaBulan >= 0 ? 'Sisa pendapatan' : 'Kekurangan (defisit)');
+    ws.addConditionalFormatting({ ref:'A35:F35', rules:[
+      { type:'expression', formulae:['$E$35<0'],  style:{ font:{ bold:true, color:{ argb:'FFB42318' } } } },
+      { type:'expression', formulae:['$E$35>=0'], style:{ font:{ bold:true, color:{ argb:'FF14703F' } } } }
+    ] });
+
+    put('A37', 'Rincian pengeluaran rutin lainnya:', { border:false, bold:true });
+    put('A38', '•  Kebersihan rumah: Sapu, alat pel, dan cairan pembersih lantai', { border:false });
+    put('A39', '•  Kebersihan diri: Sabun mandi, sampo, dan pasta gigi', { border:false });
+    put('A40', '•  Pencuci pakaian & piring: Deterjen dan sabun cuci piring', { border:false });
+    put('A42', 'Hasil simulasi bersifat perkiraan berdasarkan angka yang diisi pengguna.', { border:false, italic:true, color:'FF5A6A80' });
+
+    return wb.xlsx.writeBuffer().then(function(buf){
+      return new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    });
+  }
+
+  /* ---- Tombol unduh ---- */
+  function runDownload(btn, job){
+    if (btn.classList.contains('busy')) return;
+    var label = btn.querySelector('strong'), old = label.textContent;
+    btn.classList.add('busy'); btn.setAttribute('aria-busy', 'true'); label.textContent = 'Menyiapkan…';
+    Promise.resolve().then(job).then(
+      function(){ toast('File berhasil dibuat'); },
+      function(e){ if (window.console) console.error(e); toast('Gagal membuat file. Pastikan terhubung ke internet, lalu coba lagi.'); }
+    ).then(function(){ btn.classList.remove('busy'); btn.removeAttribute('aria-busy'); label.textContent = old; });
+  }
+  $('#btn-pdf').addEventListener('click', function(){
+    runDownload(this, function(){
+      var r = calc(), s = copy(state), st = stamp();
+      return ensurePdf().then(function(){ buildPdf(r, s, st).save('Hitung-Pengeluaran-Keluarga_' + st.iso + '.pdf'); });
+    });
+  });
+  $('#btn-xlsx').addEventListener('click', function(){
+    runDownload(this, function(){
+      var r = calc(), s = copy(state), st = stamp();
+      return ensureExcel().then(function(){ return buildXlsx(r, s, st); }).then(function(blob){
+        saveBlob(blob, 'Hitung-Pengeluaran-Keluarga_' + st.iso + '.xlsx');
+      });
+    });
+  });
+
+  load(CONTOH);
+})();
+</script>
+</body>
+</html>
